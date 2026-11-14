@@ -271,6 +271,19 @@ flutter:
 
 const languageOptions = Object.entries(workbenchLanguages) as [LanguageId, WorkbenchLanguage][];
 
+function normalizeCode(content: string) {
+  const lines = content.split("\n");
+
+  while (lines.length > 0 && lines[0].trim() === "") lines.shift();
+  while (lines.length > 0 && lines[lines.length - 1].trim() === "") lines.pop();
+
+  const indentation = Math.min(
+    ...lines.filter((line) => line.trim()).map((line) => line.match(/^\s*/)?.[0].length ?? 0),
+  );
+
+  return lines.map((line) => (line.trim() ? line.slice(indentation) : "")).join("\n");
+}
+
 function getFileColor(fileName: string) {
   if (fileName.endsWith(".tsx")) return "text-sky-400";
   if (fileName.endsWith(".dart")) return "text-sky-500";
@@ -288,7 +301,7 @@ export function CodeWorkbench() {
   const language = workbenchLanguages[activeLanguage];
   const files = language.folders.flatMap((folder) => folder.files);
   const activeFile = files.find((file) => file.path === activeFilePath) ?? files[0];
-  const activeCode = activeFile?.content ?? "";
+  const activeCode = normalizeCode(activeFile?.content ?? "");
 
   const selectLanguage = (languageId: LanguageId) => {
     const firstFile = workbenchLanguages[languageId].folders[0]?.files[0];
@@ -390,9 +403,9 @@ export function CodeWorkbench() {
                 </button>
               ))}
             </div>
-            <pre className="flex-1 overflow-hidden px-4 py-3 text-[11px] leading-[1.8] text-slate-800 dark:text-slate-200">
+            <pre className="flex-1 overflow-hidden px-4 py-3 text-left text-[11px] leading-[1.8] text-slate-800 dark:text-slate-200">
               {lines.map((line, index) => (
-                <span key={index} className="flex min-h-[1.8em]">
+                <span key={index} className="flex min-h-[1.8em] w-full">
                   <span className="mr-3 w-3 shrink-0 select-none text-right text-slate-500 dark:text-slate-600">
                     {index + 1}
                   </span>
